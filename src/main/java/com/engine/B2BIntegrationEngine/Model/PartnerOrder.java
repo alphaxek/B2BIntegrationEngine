@@ -73,4 +73,8 @@ public class PartnerOrder{
     public int getCorrelationId(){
         return this.correlationId;
     }
+
+    public String toString(){
+        return this.partnerId+" "+this.orderId+" "+this.items+" "+this.timestamp+" "+this.correlationId;
+    }
 }
