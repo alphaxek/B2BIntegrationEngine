@@ -12,9 +12,7 @@ public class PartnerOrder{
     private int orderId;
     @Nonnull
     private int items[];
-    @Nonnull
     private Date timestamp;
-    @Nonnull
     private int correlationId;
 
     public PartnerOrder(){
