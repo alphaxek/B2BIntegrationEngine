@@ -40,7 +40,7 @@ public class Partner {
     public ResponseEntity<String> createOrder(
         @RequestBody PartnerOrder partnerOrder,
         @RequestHeader(value = "X-Correlation-ID", required=false) String correlationId ) {
-
+        
         producerTemplate.sendBodyAndHeader(
             "direct:create-order", 
             partnerOrder, 
