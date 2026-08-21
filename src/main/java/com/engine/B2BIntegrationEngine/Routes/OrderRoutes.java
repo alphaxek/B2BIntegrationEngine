@@ -4,7 +4,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.component.redis.processor.idempotent.RedisIdempotentRepository;
+import org.apache.camel.component.redis.processor.idempotent.SpringRedisIdempotentRepository;
 
 @Component
 public class OrderRoutes extends RouteBuilder{
@@ -16,7 +16,7 @@ public class OrderRoutes extends RouteBuilder{
 
     @Override
     public void configure() throws Exception {
-        RedisIdempotentRepository redisIdRepo = new RedisIdempotentRepository(redisTemplate, "check-duplicate");
+        SpringRedisIdempotentRepository redisIdRepo = new SpringRedisIdempotentRepository(redisTemplate, "check-duplicate");
     
 
         from("direct:create-order")
@@ -25,12 +25,15 @@ public class OrderRoutes extends RouteBuilder{
         .skipDuplicate(false)
         .log("Processing now")
         .process(exchange -> {
-            Stirng id = exchange.getIn().getHeader("X-Correlation-Id", String.class);
-            boolean isDuplicate = exchange.getProperty(Exchange.DUPLICATE_MESSAGE, Boolean.class);
-            log(isDuplicate);
+            String id = exchange.getIn().getHeader("X-Correlation-Id", String.class);
+            Boolean isDuplicate = exchange.getProperty(Exchange.DUPLICATE_MESSAGE, Boolean.class);
+            System.out.println("Duplicate? " + isDuplicate);
+            // log(isDuplicate);
+            // log("Order is recieved ${body}");
+            // to("direct:validate-order");
         })
-        .log("Order is recieved ${body}")
-        .to("direct:validate-order");
+        .end();
+        
 
         from("direct:validate-order")
         .choice()
