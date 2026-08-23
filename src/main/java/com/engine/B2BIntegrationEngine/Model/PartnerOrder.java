@@ -1,19 +1,45 @@
 package com.engine.B2BIntegrationEngine.Model;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.stereotype.Component;
 import jakarta.annotation.Nonnull;
+import java.math.BigDecimal;
 import java.util.*;
 
 @Component
 public class PartnerOrder{
+    public enum OrderType {
+        ORDER,
+        INVOICE,
+        SHIPMENT_NOTICE
+    }
+
+    public enum OrderStatus {
+       RECEIVED,
+       VALIDATED,
+       PROCESSING,
+       COMPLETED,
+       FAILED,
+       CANCELLED,
+       VOIDED
+    }
+
+    @Id
+    private int id;
+    @Nonnull
+    private int correlationId;
     @Nonnull
     private int partnerId;
     @Nonnull
     private int orderId;
     @Nonnull
-    private int items[];
+    private OrderType orderType;
+    private OrderStatus orderStatus;
     private Date timestamp; 
-    private int correlationId;
+    private String currency;
+    private BigDecimal totalAmount;
+    private List<Item> items;
+    private String shipToAddress;
 
     public PartnerOrder(){
 
@@ -22,7 +48,7 @@ public class PartnerOrder{
     public PartnerOrder(
             int partnerId,
             int orderId,
-            int items[],
+            List<Item> items,
             Date timestamp,
             int correlationId){
         this.partnerId = partnerId;
@@ -48,11 +74,19 @@ public class PartnerOrder{
         return this.orderId;
     }
 
-    public void setItems(int items[]){
+    public void setOrderType(OrderType orderType){
+        this.orderType = orderType;
+    }
+
+    public OrderType getOrderType(){
+        return this.orderType;
+    }
+
+    public void setItems(List<Item> items){
         this.items = items;
     }
 
-    public int[] getItems(){
+    public List<Item> getItems(){
         return this.items;
     }
 
