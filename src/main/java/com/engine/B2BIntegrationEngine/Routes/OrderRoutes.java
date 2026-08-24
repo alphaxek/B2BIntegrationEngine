@@ -32,7 +32,9 @@ public class OrderRoutes extends RouteBuilder{
             // log("Order is recieved ${body}");
             // to("direct:validate-order");
         })
-        .end();
+        .end()
+        .to("direct:validate-order")
+        .to("mongodb:myMongoClient?database=B2B&collection=Orders&operation=insert");
         
 
         from("direct:validate-order")
