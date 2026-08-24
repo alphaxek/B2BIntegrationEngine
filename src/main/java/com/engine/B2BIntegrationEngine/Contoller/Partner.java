@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import jakarta.validation.Valid;
 
 
 
@@ -42,7 +43,7 @@ public class Partner {
         consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE },
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
     public ResponseEntity<String> createOrder(
-        @RequestBody PartnerOrder partnerOrder,
+        @Valid @RequestBody PartnerOrder partnerOrder,
         @RequestHeader(value = "X-Correlation-ID", required=false) String correlationId ) {
         
         producerTemplate.sendBodyAndHeader(
