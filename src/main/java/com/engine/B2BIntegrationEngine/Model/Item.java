@@ -3,11 +3,13 @@ package com.engine.B2BIntegrationEngine.Model;
 import java.math.BigDecimal;
 
 import org.springframework.stereotype.Component;
+
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 @Component
 public class Item {
-    @Positive
+    @NotNull
     private String sku;
     @Positive
     private int quantity;
