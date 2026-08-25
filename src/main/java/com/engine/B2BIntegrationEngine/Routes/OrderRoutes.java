@@ -22,19 +22,25 @@ public class OrderRoutes extends RouteBuilder{
         from("direct:create-order")
         .routeId("create-order")
         .idempotentConsumer(header("X-Correlation-Id"), redisIdRepo)
-        .skipDuplicate(false)
+        .skipDuplicate(true)
         .log("Processing now")
-        .process(exchange -> {
-            String id = exchange.getIn().getHeader("X-Correlation-Id", String.class);
-            Boolean isDuplicate = exchange.getProperty(Exchange.DUPLICATE_MESSAGE, Boolean.class);
-            System.out.println("Duplicate? " + isDuplicate);
-            // log(isDuplicate);
-            // log("Order is recieved ${body}");
-            // to("direct:validate-order");
-        })
-        .end();
-        
+        // **IDEMPOTENCY USING EXCHANGE**
+        // .process(exchange -> {
+        //     String id = exchange.getIn().getHeader("X-Correlation-Id", String.class);
+        //     Boolean isDuplicate = exchange.getProperty(Exchange.DUPLICATE_MESSAGE, Boolean.class);
+        //     System.out.println("Duplicate? " + isDuplicate);
+        // })
+        // .end()
+        // **IDEMPOTENCY USING setProperty**
+        // .setProperty("isDuplicate", exchangeProperty(Exchange.DUPLICATE_MESSAGE))
+        // .log("Duplicate? ${exchangeProperty.isDuplicate}")
 
+        // ** INITIAL CAMEL VALIDATION **
+        // .to("direct:validate-order")
+
+        .to("mongodb:myMongoClient?database=B2B&collection=Orders&operation=insert");
+        
+        //initial validation using camel choice and simple expression
         from("direct:validate-order")
         .choice()
         .when(simple("${isEmpty(${body.partnerId})}"))
