@@ -34,3 +34,7 @@ build/
 
 ### Props ###
 application.properties
+
+### Certs ###
+*.cert
+*.p12
