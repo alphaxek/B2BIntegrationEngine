@@ -41,8 +41,6 @@ public class OrderRoutes extends RouteBuilder{
             .log("partnerId is empty")
         .when(simple("${isEmpty(${body.orderId})}"))
             .log("orderId is empty")
-        .when(simple("${isEmpty(${body.items})}"))
-            .log("items are empty")
         .when(simple("${isEmpty(${body.timestamp})}"))
             .log("timestamp is empty")
         .when(simple("${isEmpty(${body.correlationId})}"))
