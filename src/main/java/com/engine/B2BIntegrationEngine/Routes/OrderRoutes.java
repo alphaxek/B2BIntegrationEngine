@@ -24,6 +24,7 @@ public class OrderRoutes extends RouteBuilder{
         .idempotentConsumer(header("X-Correlation-Id"), redisIdRepo)
         .skipDuplicate(true)
         .log("Pushing message to the Kada queue")
+        .marshal().json()
         .to("kafka:{{kafka.topic.create-order}}?brokers={{kafka.bootstrap-servers}}"
             + "&securityProtocol={{kafka.security-protocol}}"
             + "&saslMechanism={{kafka.sasl-mechanism}}"
