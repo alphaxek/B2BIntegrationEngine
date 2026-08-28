@@ -7,10 +7,10 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.redis.processor.idempotent.SpringRedisIdempotentRepository;
 
 @Component
-public class OrderRoutes extends RouteBuilder{
+public class CreateOrderRoutes extends RouteBuilder{
     private final RedisTemplate<String, String> redisTemplate;
 
-    OrderRoutes(RedisTemplate<String, String> redisTemplate){
+    CreateOrderRoutes(RedisTemplate<String, String> redisTemplate){
         this.redisTemplate = redisTemplate;
     }
 
@@ -23,7 +23,7 @@ public class OrderRoutes extends RouteBuilder{
         .routeId("create-order")
         .idempotentConsumer(header("X-Correlation-Id"), redisIdRepo)
         .skipDuplicate(true)
-        .log("Pushing message to the Kada queue")
+        .log("Pushing message to the Kafka queue")
         .marshal().json()
         .to("kafka:{{kafka.topic.create-order}}?brokers={{kafka.bootstrap-servers}}"
             + "&securityProtocol={{kafka.security-protocol}}"

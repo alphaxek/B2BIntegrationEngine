@@ -1,9 +1,12 @@
 package com.engine.B2BIntegrationEngine.Contoller;
 
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.engine.B2BIntegrationEngine.Model.PartnerOrder;
 import com.engine.B2BIntegrationEngine.Service.OrderService;
+
+import java.net.URI;
 
 import org.apache.camel.ProducerTemplate;
 import org.slf4j.Logger;
@@ -60,10 +63,11 @@ public class PartnerController {
         value = "/orders", 
         consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE },
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
-    public ResponseEntity<String> createOrder(
+    public ResponseEntity<Object> createOrder(
         @Valid @RequestBody PartnerOrder partnerOrder,
         @RequestHeader(value = "X-Correlation-ID", required=false) String correlationId ) {
         
+        //route request to camel route
         producerTemplate.sendBodyAndHeader(
             "direct:create-order", 
             partnerOrder, 
@@ -71,7 +75,22 @@ public class PartnerController {
             correlationId
         );
 
-       return ResponseEntity.accepted().body("Order recieved");
+        //prepare the href
+        URI href = ServletUriComponentsBuilder
+            .fromCurrentRequest()
+            .path("/{orderId}")
+            .buildAndExpand(partnerOrder.getOrderId())
+            .toUri();
+
+        //prepare response and return
+       return ResponseEntity
+       .accepted()
+       .location(href)
+       .body(java.util.Map.of(
+            "message", "Order creation request accepted",
+            "orderId", partnerOrder.getOrderId(),
+            "href", href.toString()
+       ));
     }
     
     
