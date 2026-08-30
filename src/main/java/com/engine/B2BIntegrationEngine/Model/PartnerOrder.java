@@ -2,6 +2,9 @@ package com.engine.B2BIntegrationEngine.Model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.annotation.Nonnull;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
@@ -144,6 +147,7 @@ public class PartnerOrder{
         return this.currency;
     }
 
+    @JsonIgnore
     @AssertTrue(message = "ORDER must contain items and totalAmount must equal the item total")
     public boolean isOrderTotalValid(){
         if (orderType != OrderType.ORDER) {
@@ -165,12 +169,14 @@ public class PartnerOrder{
         return totalAmount.compareTo(itemTotal) == 0;
     }
 
+    @JsonIgnore
     @AssertTrue(message = "SHIPMENT_NOTICE must contain shipToAddress")
     public boolean isShipmentAddressValid(){
         return orderType != OrderType.SHIPMENT_NOTICE
                 || (shipToAddress != null && !shipToAddress.isBlank());
     }
 
+    @JsonIgnore
     @AssertTrue(message = "timestamp must not be in the future")
     public boolean isTimestampValid(){
         return timestamp == null || !timestamp.after(new Date());

@@ -3,7 +3,6 @@ package com.engine.B2BIntegrationEngine.Routes;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.apache.camel.LoggingLevel;
-// import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.redis.processor.idempotent.SpringRedisIdempotentRepository;
 

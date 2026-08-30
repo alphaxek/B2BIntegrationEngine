@@ -2,11 +2,19 @@ package com.engine.B2BIntegrationEngine.Routes;
 
 import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.component.mongodb.MongoDbConstants;
+import org.apache.camel.component.redis.processor.idempotent.SpringRedisIdempotentRepository;
+import org.bson.Document;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 public class DeleteOrderRoute extends RouteBuilder {
+    private final RedisTemplate<String, String> redisTemplate;
+
+    DeleteOrderRoute(RedisTemplate<String, String> redisTemplate){
+        this.redisTemplate = redisTemplate;
+    }
+
     @Override
     public void configure() throws Exception{
         errorHandler(deadLetterChannel(dlqEndpoint())
@@ -17,29 +25,37 @@ public class DeleteOrderRoute extends RouteBuilder {
             .backOffMultiplier(2)
             .retryAttemptedLogLevel(LoggingLevel.WARN));
 
+        SpringRedisIdempotentRepository redisIdRepo = new SpringRedisIdempotentRepository(redisTemplate, "check-duplicate");
+
         from("direct:delete-order")
         .routeId("delete-order")
+        .idempotentConsumer(header("X-Correlation-Id"), redisIdRepo)
+        .skipDuplicate(true)
         .log("Received request for delete")
+        // .process(exchange -> {
+        //     Object body = exchange.getIn().getBody();
 
-        .setHeader(
-            MongoDbConstants.CRITERIA,
-            simple("{\"orderId\":\"${header.orderId}\"}")
-        )
-        .to("mongodb:myMongoClient?database=B2B&collection=Orders&operation=remove")
+        //     if (body instanceof Document document) {
+        //         String orderId = document.getString("orderId");
+        //         exchange.getIn().setHeader("orderId", orderId);
+        //     }
+        // })
 
-        .choice()
-            .when(body().isNull())
-                .log("Order with ID ${header.orderId} not found")
-                .setHeader("CamelHttpResponseCode", constant(404))
-                .setBody(constant("Order not found"))
-            .otherwise()
-                .log("Order with ID ${header.orderId} deleted: ${body}")
-                .setHeader("CamelHttpResponseCode", constant(200))
-        .end();
+        // .setHeader(
+        //     "orderId",
+        //     simple("${header.orderId}")
+        // )
+        .to("kafka:{{kafka.topic.delete-order}}?brokers={{kafka.bootstrap-servers}}"
+            + "&securityProtocol={{kafka.security-protocol}}"
+            + "&saslMechanism={{kafka.sasl-mechanism}}"
+            + "&saslJaasConfig={{kafka.sasl.jaas.config}}"
+            + "&sslTruststoreLocation={{kafka.ssl-truststore-location}}"
+            + "&sslTruststorePassword={{kafka.ssl-truststore-password}}"
+            + "&sslTruststoreType={{kafka.ssl-truststore-type}}");
     }
     
     private String dlqEndpoint() {
-        return "kafka:{{kafka.topic.create-order-dlq}}?brokers={{kafka.bootstrap-servers}}"
+        return "kafka:{{kafka.topic.delete-order-dlq}}?brokers={{kafka.bootstrap-servers}}"
             + "&securityProtocol={{kafka.security-protocol}}"
             + "&saslMechanism={{kafka.sasl-mechanism}}"
             + "&saslJaasConfig={{kafka.sasl.jaas.config}}"

@@ -126,13 +126,14 @@ public class PartnerController {
         produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
     )
     public ResponseEntity<Object> deleteOrder(
-        @PathVariable String orderId
+        @PathVariable String orderId,
+        @RequestHeader("X-Correlation-Id") String correlationId
     ){
         Object result = producerTemplate.requestBodyAndHeader(
             "direct:delete-order", 
             new Document("orderId", orderId), 
-            "orderId",
-            orderId
+            "X-Correlation-Id",
+            correlationId
         );
 
         if(result == null){
