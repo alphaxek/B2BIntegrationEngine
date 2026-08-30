@@ -128,6 +128,22 @@ public class PartnerOrder{
         return this.correlationId;
     }
 
+    public void setOrderStatus(OrderStatus orderStatus){
+        this.orderStatus = orderStatus;
+    }
+
+    public OrderStatus getOrderStatus(){
+        return this.orderStatus;
+    }
+
+    public void setCurrency(String currency){
+        this.currency = currency;
+    }
+
+    public String getCurrency(){
+        return this.currency;
+    }
+
     @AssertTrue(message = "ORDER must contain items and totalAmount must equal the item total")
     public boolean isOrderTotalValid(){
         if (orderType != OrderType.ORDER) {

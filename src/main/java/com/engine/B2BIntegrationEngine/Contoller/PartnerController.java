@@ -6,15 +6,20 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.engine.B2BIntegrationEngine.Model.PartnerOrder;
 import com.engine.B2BIntegrationEngine.Service.OrderService;
 
+import io.micrometer.core.ipc.http.HttpSender.Response;
+
 import java.net.URI;
 
 import org.apache.camel.ProducerTemplate;
+import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -65,13 +70,13 @@ public class PartnerController {
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
     public ResponseEntity<Object> createOrder(
         @Valid @RequestBody PartnerOrder partnerOrder,
-        @RequestHeader(value = "X-Correlation-ID", required=false) String correlationId ) {
+        @RequestHeader(value = "X-Correlation-Id", required=false) String correlationId ) {
         
         //route request to camel route
         producerTemplate.sendBodyAndHeader(
             "direct:create-order", 
             partnerOrder, 
-            "X-Correlation-ID", 
+            "X-Correlation-Id", 
             correlationId
         );
 
@@ -93,5 +98,46 @@ public class PartnerController {
        ));
     }
     
-    
+    @PatchMapping(
+        value = "/orders",
+        consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
+        produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
+    )
+    public ResponseEntity<Object> updateOrder(
+        @RequestHeader("X-Correlation-Id") String correlationId,
+        @Valid @RequestBody PartnerOrder partnerOrder
+    ){
+        Object result = producerTemplate.requestBodyAndHeader(
+            "direct:update-order",
+            partnerOrder,
+            "X-Correlation-Id",
+            correlationId
+        );
+
+        if(result == null){
+            return ResponseEntity.notFound().build();
+        }else{
+            return ResponseEntity.ok(result);
+        }
+    }
+
+    @DeleteMapping(
+        value = "/orders/{orderId}",
+        produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
+    )
+    public ResponseEntity<Object> deleteOrder(
+        @PathVariable String orderId
+    ){
+        Object result = producerTemplate.requestBodyAndHeader(
+            "direct:delete-order", 
+            new Document("orderId", orderId), 
+            "orderId",
+            orderId
+        );
+
+        if(result == null){
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok().build();
+    }
 }
