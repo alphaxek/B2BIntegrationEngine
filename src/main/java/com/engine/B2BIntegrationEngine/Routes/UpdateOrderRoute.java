@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.camel.LoggingLevel;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.mongodb.MongoDbConstants;
 import org.apache.camel.component.redis.processor.idempotent.SpringRedisIdempotentRepository;
@@ -27,6 +28,14 @@ public class UpdateOrderRoute extends RouteBuilder{
 
     @Override
     public void configure() throws Exception {
+        errorHandler(deadLetterChannel(dlqEndpoint())
+            .maximumRedeliveries(3)
+            .redeliveryDelay(5000)
+            .maximumRedeliveryDelay(60000)
+            .useExponentialBackOff()
+            .backOffMultiplier(2)
+            .retryAttemptedLogLevel(LoggingLevel.WARN));
+
         SpringRedisIdempotentRepository redisIdRepo = new SpringRedisIdempotentRepository(redisTemplate, "duplicate-check");
 
         from("direct:update-order")
@@ -81,5 +90,15 @@ public class UpdateOrderRoute extends RouteBuilder{
             .otherwise()
                 .setHeader("HttpCamelResponseCode", constant(200))
         .end();
+    }
+
+    
+    private String dlqEndpoint() {
+        return "kafka:{{kafka.topic.create-order-dlq}}?brokers={{kafka.bootstrap-servers}}"
+            + "&securityProtocol={{kafka.security-protocol}}"
+            + "&saslMechanism={{kafka.sasl-mechanism}}"
+            + "&saslJaasConfig={{kafka.sasl.jaas.config}}"
+            + "&sslTruststoreLocation={{kafka.ssl-truststore-location}}"
+            + "&sslTruststorePassword={{kafka.ssl-truststore-password}}";
     }
 }

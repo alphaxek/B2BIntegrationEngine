@@ -2,6 +2,7 @@ package com.engine.B2BIntegrationEngine.Routes;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.apache.camel.LoggingLevel;
 // import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.redis.processor.idempotent.SpringRedisIdempotentRepository;
@@ -16,8 +17,15 @@ public class CreateOrderRoutes extends RouteBuilder{
 
     @Override
     public void configure() throws Exception {
+        errorHandler(deadLetterChannel(dlqEndpoint())
+            .maximumRedeliveries(3)
+            .redeliveryDelay(5000)
+            .maximumRedeliveryDelay(60000)
+            .useExponentialBackOff()
+            .backOffMultiplier(2)
+            .retryAttemptedLogLevel(LoggingLevel.WARN));
+
         SpringRedisIdempotentRepository redisIdRepo = new SpringRedisIdempotentRepository(redisTemplate, "check-duplicate");
-    
 
         from("direct:create-order")
         .routeId("create-order")
@@ -61,5 +69,15 @@ public class CreateOrderRoutes extends RouteBuilder{
         // .when(simple("${isEmpty(${body.correlationId})}"))
         //     .log("orderId is correlationId");
 
+    }
+
+    
+    private String dlqEndpoint() {
+        return "kafka:{{kafka.topic.create-order-dlq}}?brokers={{kafka.bootstrap-servers}}"
+            + "&securityProtocol={{kafka.security-protocol}}"
+            + "&saslMechanism={{kafka.sasl-mechanism}}"
+            + "&saslJaasConfig={{kafka.sasl.jaas.config}}"
+            + "&sslTruststoreLocation={{kafka.ssl-truststore-location}}"
+            + "&sslTruststorePassword={{kafka.ssl-truststore-password}}";
     }
 }
